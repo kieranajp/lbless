@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.cloudflareSync.name }}
+  labels:
+    app: {{ .Values.cloudflareSync.name }}
+    {{- include "lbless.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.cloudflareSync.name }}
+      {{- include "lbless.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.cloudflareSync.name }}
+        {{- include "lbless.selectorLabels" . | nindent 8 }}
+      annotations:
+        config-version: "2"
+    spec:
+    {{- with .Values.cloudflareSync.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ .Values.cloudflareSync.serviceAccount }}
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: {{ .Values.cloudflareSync.pod.containerName }}
+        image: "{{ .Values.cloudflareSync.pod.image }}:{{ .Values.cloudflareSync.pod.tag }}"
+        args:
+        - "--dns-name={{ .Values.cloudflareSync.dnsRecord }}"
+        env:
+        - name: CF_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cloudflareSync.secret.name }}
+              key: token
+        - name: CF_API_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cloudflareSync.secret.name }}
+              key: email
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "50Mi"

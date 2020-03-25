@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.ingress.name }}-conf
+data:
+  nginx.conf: |
+    worker_processes 1;
+    error_log /dev/stdout info;
+
+    events {
+      worker_connections 10;
+    }
+
+    http {
+      access_log /dev/stdout;
+
+{{- range .Values.ingress.backends }}
+      server {
+        listen 80;
+        server_name {{ .domain }};
+
+{{- range .paths }}
+        location {{ .path }} {
+          proxy_pass http://{{ .service.name }}.{{ .service.namespace }}.svc.cluster.local:{{ .service.port }};
+        }
+{{- end }}
+      }
+{{- end }}
+    }

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Values.ingress.name }}
+  labels:
+    app: {{ .Values.ingress.name }}
+    {{- include "lbless.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.ingress.name }}
+      {{- include "lbless.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.ingress.name }}
+        {{- include "lbless.selectorLabels" . | nindent 8 }}
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: {{ .Values.ingress.pod.containerName }}
+        image: "{{ .Values.ingress.pod.image }}:{{ .Values.ingress.pod.tag }}"
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: {{ .Values.ingress.hostPort }}
+        volumeMounts:
+        - name: "config"
+          mountPath: {{ .Values.ingress.config.mountPath }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ .Values.ingress.name }}-conf

@@ -1,0 +1,40 @@
+cloudflareSync:
+  name: kubernetes-cloudflare-sync
+  dnsRecord: do-k8s.example.org
+  serviceAccount: kubernetes-cloudflare-sync
+  
+  pod:
+    containerName: kubernetes-cloudflare-sync
+    image: calebdoxsey/kubernetes-cloudflare-sync 
+    tag: latest
+
+  imagePullSecrets: {}
+  
+  secret:  
+    name: kubernetes-cloudflare-sync
+    cloudflareApiKey:
+    cloudflareEmail: 
+
+ingress:
+  name: ingress
+
+  pod:
+    containerName: ingress
+    image: nginx
+    tag: 1.17-alpine
+
+  imagePullSecrets: {}
+
+  config:
+    mountPath: "/etc/nginx"
+    
+  backends:
+    - domain: app.example.org
+      paths:
+        - path: /
+          service: 
+            name: example
+            namespace: default
+            port: 8080
+
+
